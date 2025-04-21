@@ -31,43 +31,45 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        .square {
+        .square { /* Now a button */
             width: 60px;
             height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative; /* For valid move indicators */
+            /* Reset button styles */
+            border: none;
+            padding: 0;
+            margin: 0;
+            font-size: 40px; /* Piece size */
+            cursor: pointer;
+            background: none; /* Background color set by light/dark */
+            transition: transform 0.1s ease-in-out;
         }
+        .square:hover {
+            /* Optional: Subtle hover effect for the square itself */
+            /* transform: scale(1.02); */
+             /* Or maybe a slight border */
+            /* box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); */
+        }
+
 
         .square.light { background-color: #f0d9b5; }
         .square.dark { background-color: #b58863; }
 
-        .piece-button {
-            width: 90%;
-            height: 90%;
-            background: none;
-            border: none;
-            font-size: 40px; /* Adjust size as needed */
-            cursor: pointer;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s ease-in-out;
-            border-radius: 5px; /* Slightly rounded corners */
-        }
+        /* Apply piece colors directly to the square button */
+        .square.white-piece { color: #ffffff; text-shadow: 1px 1px 2px #000000; }
+        .square.black-piece { color: #000000; text-shadow: 1px 1px 2px #aaaaaa;}
 
-        .piece-button:hover {
-             transform: scale(1.05);
-        }
+        /* No longer need specific .piece-button styles */
+        /* .piece-button { ... } */
+        /* .piece-button:hover { ... } */
+        /* .piece-button.white { ... } */
+        /* .piece-button.black { ... } */
 
-        .piece-button.white { color: #ffffff; text-shadow: 1px 1px 2px #000000; }
-        .piece-button.black { color: #000000; text-shadow: 1px 1px 2px #aaaaaa;}
-
-        .selected {
-            background-color: rgba(0, 255, 0, 0.3); /* Greenish highlight */
+        .selected { /* Apply selection style to the square button */
+            background-color: rgba(0, 255, 0, 0.3) !important; /* Use !important to override light/dark */
             box-shadow: inset 0 0 5px 2px rgba(0, 100, 0, 0.7);
         }
 
@@ -78,6 +80,10 @@
             background-color: rgba(0, 0, 0, 0.2);
             border-radius: 50%;
             pointer-events: none; /* Allow clicks to pass through to the square */
+            /* Center it - might need slight adjustment */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .capture-move-indicator {
@@ -88,8 +94,10 @@
              border-radius: 5px;
              box-sizing: border-box;
              pointer-events: none;
+             /* Center it */
+             top: 5%;
+             left: 5%;
         }
-
 
         #status {
             margin-top: 20px;
@@ -190,7 +198,7 @@
 
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
-                    const square = document.createElement('div');
+                    const square = document.createElement('button'); // Create button instead of div
                     square.classList.add('square');
                     square.classList.add((r + c) % 2 === 0 ? 'light' : 'dark');
                     square.dataset.row = r;
@@ -198,13 +206,15 @@
 
                     const piece = board[r][c];
                     if (piece) {
-                        const pieceButton = document.createElement('button');
-                        pieceButton.classList.add('piece-button');
-                        pieceButton.classList.add(piece.color);
-                        pieceButton.textContent = piece.unicode;
-                        pieceButton.dataset.type = piece.type;
-                        pieceButton.dataset.color = piece.color;
-                        square.appendChild(pieceButton);
+                        square.textContent = piece.unicode;
+                        square.classList.add(piece.color + '-piece'); // Add 'white-piece' or 'black-piece'
+                        square.dataset.type = piece.type; // Keep data attributes for easier access maybe
+                        square.dataset.color = piece.color;
+                    } else {
+                        // Ensure empty squares don't have piece text/classes
+                        square.textContent = '';
+                        // Ensure removal of piece classes if re-rendering after a move/capture
+                        square.classList.remove('white-piece', 'black-piece');
                     }
 
                     chessboardElement.appendChild(square);
@@ -220,13 +230,13 @@
             if (gameOver) return;
 
             const target = event.target;
-            // Find the parent square element, whether clicking the square or the button inside
-            const squareElement = target.closest('.square');
-            if (!squareElement) return; // Clicked outside a square
+            // Find the parent square button element
+            const squareElement = target.closest('button.square');
+            if (!squareElement) return; // Clicked outside a square button
 
             const row = parseInt(squareElement.dataset.row);
             const col = parseInt(squareElement.dataset.col);
-            const clickedPieceData = board[row][col];
+            const clickedPieceData = board[row][col]; // Check board state for piece info
 
             if (selectedPiece) {
                 // Attempting to make a move
@@ -245,7 +255,7 @@
                     clearSelectionAndHighlights();
                     // If clicked on another piece of the current player, select it
                     if (clickedPieceData && clickedPieceData.color === currentPlayer) {
-                        selectPiece(squareElement, clickedPieceData, row, col);
+                        selectPiece(squareElement, clickedPieceData, row, col); // Pass squareElement
                     } else {
                         selectedPiece = null; // Just deselect
                     }
@@ -253,16 +263,14 @@
             } else {
                 // No piece selected, try selecting one
                 if (clickedPieceData && clickedPieceData.color === currentPlayer) {
-                    selectPiece(squareElement, clickedPieceData, row, col);
+                    selectPiece(squareElement, clickedPieceData, row, col); // Pass squareElement
                 }
             }
         }
 
         function selectPiece(squareElement, pieceData, row, col) {
-             const pieceButton = squareElement.querySelector('.piece-button');
-             if (!pieceButton) return; // Should not happen if pieceData exists
-
-             selectedPiece = { element: pieceButton, piece: pieceData, row, col };
+             // squareElement is now the button itself, no need to querySelector
+             selectedPiece = { element: squareElement, piece: pieceData, row, col }; // Store the square button as the element
              validMoves = calculateValidMoves(pieceData, row, col);
 
              // Filter moves that would leave the king in check
@@ -271,14 +279,14 @@
                  return !isKingInCheck(currentPlayer, tempBoard);
              });
 
-             highlightSelectedPiece(pieceButton);
+             highlightSelectedPiece(squareElement); // Highlight the square button
              highlightValidMoves(validMoves);
         }
 
 
         function clearSelectionAndHighlights() {
             if (selectedPiece && selectedPiece.element) {
-                selectedPiece.element.classList.remove('selected');
+                selectedPiece.element.classList.remove('selected'); // Remove from the square button
             }
             selectedPiece = null;
             validMoves = [];
@@ -286,13 +294,14 @@
             document.querySelectorAll('.valid-move-indicator, .capture-move-indicator').forEach(ind => ind.remove());
         }
 
-        function highlightSelectedPiece(pieceButton) {
-            pieceButton.classList.add('selected');
+        function highlightSelectedPiece(squareButton) { // Renamed param for clarity
+            squareButton.classList.add('selected'); // Apply to the square button
         }
 
         function highlightValidMoves(moves) {
             moves.forEach(move => {
-                const targetSquare = chessboardElement.querySelector(`.square[data-row='${move.row}'][data-col='${move.col}']`);
+                // Select the target button.square
+                const targetSquare = chessboardElement.querySelector(`button.square[data-row='${move.row}'][data-col='${move.col}']`);
                 if (targetSquare) {
                     const indicator = document.createElement('div');
                     // Check if the move is a capture
@@ -302,7 +311,7 @@
                     } else {
                         indicator.classList.add('valid-move-indicator');
                     }
-                    targetSquare.appendChild(indicator);
+                    targetSquare.appendChild(indicator); // Append indicator to the button
                 }
             });
         }
