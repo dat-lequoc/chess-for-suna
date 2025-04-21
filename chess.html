@@ -73,9 +73,9 @@
         .piece {
             text-shadow: var(--piece-text-shadow);
             line-height: 1; /* Ensure piece stays centered */
-            pointer-events: none; /* Clicks should register on the square */
             -webkit-text-stroke: 1px black; /* Add black border to all pieces */
             text-stroke: 1px black; /* For browsers that support standard property */
+            cursor: pointer; /* Add cursor pointer to indicate clickability */
         }
 
         .white-piece { color: var(--white-piece-color); }
@@ -251,6 +251,13 @@
                     const file = String.fromCharCode('a'.charCodeAt(0) + c);
                     const rank = 8 - r;
                     pieceElement.id = `piece-${pieceCode}-${file}${rank}`;
+                    
+                    // Add data attributes to piece elements for handling clicks
+                    pieceElement.dataset.row = r;
+                    pieceElement.dataset.col = c;
+                    
+                    // Add click event to piece element
+                    pieceElement.addEventListener('click', handlePieceClick);
 
                     square.appendChild(pieceElement);
 
@@ -263,6 +270,21 @@
 
             // Highlight king if in check
              highlightKingInCheck();
+        }
+
+        // Add new function to handle clicks directly on pieces
+        function handlePieceClick(event) {
+            // Prevent event from bubbling to the square
+            event.stopPropagation();
+            
+            const pieceElement = event.currentTarget;
+            const row = parseInt(pieceElement.dataset.row);
+            const col = parseInt(pieceElement.dataset.col);
+            
+            // Call the square click handler with the piece's coordinates
+            handleSquareClick({
+                currentTarget: document.getElementById(getSquareId(row, col))
+            });
         }
 
          function highlightKingInCheck() {
