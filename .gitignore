@@ -1,1 +1,3 @@
 .aider*
+**/.prompts/
+**/__pycache__/
