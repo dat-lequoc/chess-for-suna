@@ -85,26 +85,26 @@
             transition: background-color 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
         }
 
-        .position-text {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            font-size: 10px;
-            color: rgba(0, 0, 0, 0.5);
-            pointer-events: none;
-            font-weight: bold;
-            display: none; /* Completely hide the position text */
-        }
-        .square-button.dark .position-text {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
         .square-button.light { background-color: #f0d9b5; }
         .square-button.dark { background-color: #b58863; }
 
         /* Piece Colors */
         .square-button.white { color: #ffffff; text-shadow: 1px 1px 2px #000000; }
         .square-button.black { color: #000000; text-shadow: 1px 1px 2px #aaaaaa;}
+
+        /* Hide the data-text attribute visually but keep it accessible to scrapers */
+        .square-button::after {
+            content: attr(data-text);
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
 
         /* --- Interaction States --- */
 
@@ -280,7 +280,6 @@
         // --- Rendering ---
         function renderBoard() {
             chessboardElement.innerHTML = ''; // Clear previous state
-            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
@@ -289,12 +288,12 @@
                     squareButton.classList.add((r + c) % 2 === 0 ? 'light' : 'dark');
                     squareButton.dataset.row = r;
                     squareButton.dataset.col = c;
-
-                    // Create position text element (algebraic notation)
-                    const positionText = document.createElement('span');
-                    positionText.classList.add('position-text');
-                    positionText.textContent = files[c] + (8 - r); // e.g., "e4", "a8"
                     
+                    // Add chess notation as data-text attribute (a1, b2, etc.)
+                    const file = String.fromCharCode(97 + c); // 'a' + column index
+                    const rank = 8 - r; // Chess ranks are 8 to 1 (top to bottom)
+                    squareButton.dataset.text = file + rank;
+
                     const piece = board[r][c];
                     if (piece) {
                         squareButton.textContent = piece.unicode;
@@ -305,7 +304,6 @@
                         squareButton.textContent = ''; // Or use &nbsp; if needed for layout stability
                     }
 
-                    squareButton.appendChild(positionText);
                     chessboardElement.appendChild(squareButton);
                 }
             }
