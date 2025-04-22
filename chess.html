@@ -78,11 +78,26 @@
             border: none; /* Remove default button border */
             padding: 0;
             margin: 0;
-            font-size: 40px; /* Piece size */
+            /* Make the actual text (notation) visually hidden but accessible */
+            font-size: 1px; 
+            color: transparent;
             cursor: pointer;
-            position: relative; /* For pseudo-elements if needed */
+            position: relative; /* For pseudo-elements */
             box-sizing: border-box; /* Include border in size */
             transition: background-color 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+        }
+
+        /* Use ::before to display the piece symbol */
+        .square-button.has-piece::before {
+            content: attr(data-piece-symbol); /* Get symbol from data attribute */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px; /* Restore original piece size */
+            color: inherit; /* Inherit color from .white/.black class */
+            text-shadow: inherit; /* Inherit shadow from .white/.black class */
+            pointer-events: none; /* Don't interfere with clicks */
         }
 
         .square-button.light { background-color: #f0d9b5; }
@@ -275,20 +290,22 @@
                     squareButton.dataset.row = r;
                     squareButton.dataset.col = c;
                     
-                    // Add chess notation as data-text attribute (a1, b2, etc.)
+                    // Add chess notation (a1, b2, etc.)
                     const file = String.fromCharCode(97 + c); // 'a' + column index
                     const rank = 8 - r; // Chess ranks are 8 to 1 (top to bottom)
-                    squareButton.dataset.text = file + rank;
+                    const notation = file + rank;
+                    squareButton.dataset.text = notation; // Keep the data-text attribute
+                    squareButton.textContent = notation; // Set the notation as the main text content
 
                     const piece = board[r][c];
                     if (piece) {
-                        squareButton.textContent = piece.unicode;
+                        // Store the piece symbol in a separate data attribute
+                        squareButton.dataset.pieceSymbol = piece.unicode; 
                         squareButton.classList.add(piece.color); // Add 'white' or 'black' class
                         squareButton.classList.add('has-piece'); // Generic class if needed
                         squareButton.dataset.type = piece.type; // Store type for potential future use
-                    } else {
-                        squareButton.textContent = ''; // Or use &nbsp; if needed for layout stability
-                    }
+                    } 
+                    // No need for an else to clear textContent, it's already set to notation
 
                     chessboardElement.appendChild(squareButton);
                 }
